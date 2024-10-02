@@ -126,28 +126,38 @@ async function run() {
 
         app.post("/payment-create", async (req, res) => {
             const paymentInfo = req.body
+
+            // Product Info
+            const products = paymentInfo.prodcuts
+            const product_name = products.map(product => product.prodcut_name).join(", ")
+            const product_category = products.map(product => product.product_category).join(", ")
+
+            // User Info
+            const userInfo = paymentInfo.addressInfo
+            console.log(userInfo)
+
             const initateData = {
                 store_id: "webwa66d6f4cb94fee",
                 store_passwd: "webwa66d6f4cb94fee@ssl",
-                total_amount: 5000,
-                currency: "BDT",
+                total_amount: paymentInfo.amount,
+                currency: paymentInfo.currency,
                 tran_id: tnxId,
                 success_url: "http://localhost:5000/success-payment",
                 fail_url: "http://localhost:5000/payment-fail",
                 cancel_url: "http://localhost:5000/payment-cancel",
-                cus_name: "Kalidash",
-                cus_email: "kalidashodekare14@gmail.com",
-                cus_add1: "Dhaka",
+                cus_name: paymentInfo.customar_name || "None",
+                cus_email: paymentInfo.customar_email || "None",
+                cus_add1: userInfo.current_address || "None",
                 cus_add2: "Dhaka",
-                cus_city: "Dhaka",
+                cus_city: userInfo.address || "None",
                 cus_state: "Dhaka",
-                cus_postcode: "1000",
-                cus_country: "Bangladesh",
-                cus_phone: "01711111111",
+                cus_postcode: userInfo.postal_code || "None",
+                cus_country: userInfo.country || "None",
+                cus_phone: userInfo.phone_number || "None",
                 cus_fax: "01711111111",
                 shipping_method: "NO",
-                product_name: "biscut",
-                product_category: "mamabiscut",
+                product_name: product_name,
+                product_category: product_category,
                 product_profile: "general",
                 multi_card_name: "mastercard,visacard,amexcard",
                 value_a: "ref001_A&",
@@ -165,15 +175,17 @@ async function run() {
                 }
             })
 
-            const daveData = {
+            const saveData = {
                 customar_name: paymentInfo?.customar_name,
                 customar_email: paymentInfo?.customar_email,
                 amount: paymentInfo?.amount,
                 current: paymentInfo.currency,
                 transaction_id: tnxId,
+                products,
+                userInfo,
                 status: "Pending"
             }
-            const save = await paymentHistory.insertOne(daveData)
+            const save = await paymentHistory.insertOne(saveData)
             if (save) {
                 res.send({
                     paymentUrl: response.data.GatewayPageURL
