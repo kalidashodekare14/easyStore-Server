@@ -32,7 +32,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        // await client.connect();
+        await client.connect();
 
         const AllProducts = client.db("EasyShop").collection("All_Product")
         const AllUsers = client.db("EasyShop").collection("All_Users")
@@ -198,19 +198,30 @@ async function run() {
             if (successData.status !== "VALID") {
                 throw new Error("Unauthorized payment, Invalid Payment")
             }
-            console.log(successData.tran_id)
+
             const query = {
                 transaction_id: successData.tran_id
             }
-            console.log(successData.tran_id)
+
+
             const update = {
                 $set: {
                     status: "Success"
                 }
             }
-            const result = await paymentHistory.updateOne(query, update)
-            console.log('payment update', result)
-            res.redirect(`http://localhost:5173/payment-success?tran_id=${successData.tran_id}`)
+
+            try {
+                const result = await paymentHistory.updateOne(query, update)
+
+                // if (result.modifiedCount === 0) {
+                //     throw new Error("Failed to update payment status")
+                // }
+                console.log('payment update', result)
+                res.redirect(`http://localhost:5173/payment-success?tran_id=${successData.tran_id}`)
+            } catch (error) {
+                console.log("Error updating payment status", error.message)
+                res.status(500).send("payment update failed");
+            }
         })
 
         app.post("/payment-fail", async (req, res) => {
