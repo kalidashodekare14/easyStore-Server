@@ -38,7 +38,7 @@ async function run() {
         const AllProducts = client.db("EasyShop").collection("All_Product")
         const AllUsers = client.db("EasyShop").collection("All_Users")
         const paymentHistory = client.db("EasyShop").collection("Payment_Info")
-        const tnxId = `TNX${Date.now()}`
+        const tnxId = new ObjectId().toString();
 
 
         // jwt create
@@ -96,6 +96,12 @@ async function run() {
             const result = await AllProducts.find().toArray()
             res.send(result)
         })
+
+        app.get("/dashboard-all-product", verifyToken, async (req, res) => {
+            const result = await AllProducts.find().toArray()
+            res.send(result)
+        })
+
         app.get('/prodcut_details/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: new ObjectId(id) }
@@ -282,6 +288,14 @@ async function run() {
 
         app.post("/payment-cancel", async (req, res) => {
             res.redirect("http://localhost:5173/payment-cancel")
+        })
+
+
+        app.delete("/all-product/:id", async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await AllProducts.deleteOne(query)
+            res.send(result)
         })
 
 
