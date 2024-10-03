@@ -41,6 +41,31 @@ async function run() {
         const tnxId = `TNX${Date.now()}`
 
 
+        // jwt create
+        app.post("/jwt", async (req, res) => {
+            const user = req.body
+            const token = jwt.sign(user, process.env.JWT_TOKEN_KEY, { expiresIn: "1h" })
+            res.send({ token })
+        })
+
+
+
+        // verify token
+        const verifyToken = (req, res, next) => {
+            // console.log("token checking", req.headers.authorization)
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: "forbidden access" })
+            }
+            const token = req.headers.authorization.split(' ')[1]
+            jwt.verify(token, process.env.JWT_TOKEN_KEY, (error, decoded) => {
+                if (error) {
+                    return res.status(401).send({ message: "forbidden access" })
+                }
+                req.decoded = decoded;
+                next()
+            })
+        }
+
         app.get('/all_product', async (req, res) => {
             const result = await AllProducts.find().toArray()
             res.send(result)
