@@ -66,6 +66,32 @@ async function run() {
             })
         }
 
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email
+            const query = { email: email }
+            const adminFind = await AllUsers.findOne(query)
+            const isAdmin = adminFind?.role === 'Admin'
+            if (!isAdmin) {
+                return res.status(403).send({ message: 'fobidden access' })
+            }
+            next()
+        }
+
+
+        app.get("/isAdmin/:email", verifyToken, async (req, res) => {
+            const email = req.params.email
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: "unauthorized access" })
+            }
+            const query = { email: email }
+            const adminFind = await AllUsers.findOne(query)
+            let admin = false
+            if (adminFind && adminFind.role === "Admin") {
+                admin = true
+            }
+            res.send({ admin })
+        })
+
         app.get('/all_product', async (req, res) => {
             const result = await AllProducts.find().toArray()
             res.send(result)
@@ -77,7 +103,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/customar-profile/:email', async (req, res) => {
+        app.get('/customar-profile/:email', verifyToken, async (req, res) => {
             const email = req.params.email
             const query = { email: email }
             const result = await AllUsers.findOne(query)
