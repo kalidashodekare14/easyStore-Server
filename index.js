@@ -296,6 +296,11 @@ async function run() {
                 const lastYear = new Date(currentTime - 365 * 24 * 60 * 60 * 1000)
 
 
+                // weeks time =======================
+                // const currentTime = new Date()
+                const startOfWeek = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate() - currentTime.getDay());
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 6)
 
                 //  TOTAL AMOUNT START ===================================================
 
@@ -346,6 +351,101 @@ async function run() {
 
                 // TOTAL ORDER END ========================================================
 
+                // 7 day data i mean 1 week ==============================================
+
+
+                const revenueData = await paymentHistory.aggregate([
+                    {
+                        $match: {
+                            createdAt: {
+                                $gte: startOfWeek,
+                                $lte: endOfWeek
+                            }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: { $dayOfWeek: "$createdAt" },
+                            totalRevenue: { $sum: "$amount" }
+                        }
+                    },
+                    {
+                        $sort: { _id: 1 }
+                    }
+                ]).toArray()
+
+                const customarData = await AllUsers.aggregate([
+                    {
+                        $match: {
+                            createdAt: {
+                                $gte: startOfWeek,
+                                $lte: endOfWeek
+                            }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: { $dayOfWeek: "$createdAt" },
+                            totalCustomar: { $sum: 1 }
+                        }
+                    },
+                    {
+                        $sort: { _id: 1 }
+                    }
+                ]).toArray()
+
+                const orderData = await paymentHistory.aggregate([
+                    {
+                        $match: {
+                            createdAt: {
+                                $gte: startOfWeek,
+                                $lte: endOfWeek
+                            }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: { $dayOfWeek: "$createdAt" },
+                            totalOrder: { $sum: 1 }
+                        }
+                    },
+                    {
+                        $sort: { _id: 1 }
+                    }
+                ]).toArray()
+
+                const productData = await AllProducts.aggregate([
+                    {
+                        $match: {
+                            createdAt: {
+                                $gte: startOfWeek,
+                                $lte: endOfWeek
+                            }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: { $dayOfWeek: "$createdAt" },
+                            totalProduct: { $sum: 1 }
+                        }
+                    },
+                    {
+                        $sort: { _id: 1 }
+                    }
+                ]).toArray()
+
+                const dayOfWeek = ["SAT", "SUN", "MON", "TUES", "WEN", "THES", "FRI"]
+                const weeklyData = dayOfWeek.map((day, index) => ({
+                    day,
+                    revenue: revenueData.find(data => data._id === index + 1)?.totalRevenue || 0,
+                    customars: customarData.find(data => data._id === index + 1)?.totalCustomar || 0,
+                    orders: orderData.find(data => data._id === index + 1)?.totalOrder || 0,
+                    products: productData.find(data => data._id === index + 1)?.totalProduct || 0
+                }))
+
+
+                // 7 day data i mean 1 week ==============================================
+
                 res.status(200).json({
                     totalRevenue: {
                         last24Hours: last24HourseRevenue.totalAmount,
@@ -370,14 +470,125 @@ async function run() {
                         lastWeek: lastWeekOrder,
                         lastMonth: lastMonthProducts,
                         lastYear: lastYearProducts
+                    },
+                    weeksData: {
+                        weeklyData
                     }
+
                 })
 
 
             } catch (error) {
-                res.status(500).json('error', error.message)
+                res.status(500).json({ message: error.message })
             }
         })
+
+
+        // app.get("/weeks-data", async (req, res) => {
+
+        //     try {
+        //         const currentTime = new Date()
+        //         // 1 weeks date create
+        //         const startOfWeek = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate() - currentTime.getDay());
+        //         const endOfWeek = new Date(startOfWeek);
+        //         endOfWeek.setDate(endOfWeek.getDate() + 6)
+
+        //         const revenueData = await paymentHistory.aggregate([
+        //             {
+        //                 $match: {
+        //                     createdAt: {
+        //                         $gte: startOfWeek,
+        //                         $lte: endOfWeek
+        //                     }
+        //                 }
+        //             },
+        //             {
+        //                 $group: {
+        //                     _id: { $dayOfWeek: "$createdAt" },
+        //                     totalRevenue: { $sum: "$amount" }
+        //                 }
+        //             },
+        //             {
+        //                 $sort: { _id: 1 }
+        //             }
+        //         ]).toArray()
+
+        //         const customarData = await AllUsers.aggregate([
+        //             {
+        //                 $match: {
+        //                     createdAt: {
+        //                         $gte: startOfWeek,
+        //                         $lte: endOfWeek
+        //                     }
+        //                 }
+        //             },
+        //             {
+        //                 $group: {
+        //                     _id: { $dayOfWeek: "$createdAt" },
+        //                     totalCustomar: { $sum: 1 }
+        //                 }
+        //             },
+        //             {
+        //                 $sort: { _id: 1 }
+        //             }
+        //         ]).toArray()
+
+        //         const orderData = await paymentHistory.aggregate([
+        //             {
+        //                 $match: {
+        //                     createdAt: {
+        //                         $gte: startOfWeek,
+        //                         $lte: endOfWeek
+        //                     }
+        //                 }
+        //             },
+        //             {
+        //                 $group: {
+        //                     _id: { $dayOfWeek: "$createdAt" },
+        //                     totalOrder: { $sum: 1 }
+        //                 }
+        //             },
+        //             {
+        //                 $sort: { _id: 1 }
+        //             }
+        //         ]).toArray()
+
+        //         const productData = await AllProducts.aggregate([
+        //             {
+        //                 $match: {
+        //                     createdAt: {
+        //                         $gte: startOfWeek,
+        //                         $lte: endOfWeek
+        //                     }
+        //                 }
+        //             },
+        //             {
+        //                 $group: {
+        //                     _id: { $dayOfWeek: "$createdAt" },
+        //                     totalProduct: { $sum: 1 }
+        //                 }
+        //             },
+        //             {
+        //                 $sort: { _id: 1 }
+        //             }
+        //         ]).toArray()
+
+        //         const dayOfWeek = ["SAT", "SUN", "MON", "TUES", "WEN", "THES", "FRI"]
+        //         const weeklyData = dayOfWeek.map((day, index) => ({
+        //             day,
+        //             revenue: revenueData.find(data => data._id === index + 1)?.totalRevenue || 0,
+        //             customars: customarData.find(data => data._id === index + 1)?.totalCustomar || 0,
+        //             orders: orderData.find(data => data._id === index + 1)?.totalOrder || 0,
+        //             products: productData.find(data => data._id === index + 1)?.totalProduct || 0
+        //         }))
+
+        //         res.status(200).json(weeklyData)
+
+        //     } catch (error) {
+        //         console.log("Error fetching week data:", error)
+        //         res.status(500).json({ error: error.message })
+        //     }
+        // })
 
         app.post("/payment-fail", async (req, res) => {
             res.redirect("http://localhost:5173/payment-fail")
