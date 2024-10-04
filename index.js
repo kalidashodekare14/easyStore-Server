@@ -40,7 +40,6 @@ async function run() {
         const paymentHistory = client.db("EasyShop").collection("Payment_Info")
         const tnxId = new ObjectId().toString();
 
-
         // jwt create
         app.post("/jwt", async (req, res) => {
             const user = req.body
@@ -77,7 +76,7 @@ async function run() {
             next()
         }
 
-
+        // Admin Create
         app.get("/isAdmin/:email", verifyToken, async (req, res) => {
             const email = req.params.email
             if (email !== req.decoded.email) {
@@ -97,8 +96,15 @@ async function run() {
             res.send(result)
         })
 
+        // dashboard api
+
         app.get("/dashboard-all-product", verifyToken, async (req, res) => {
             const result = await AllProducts.find().toArray()
+            res.send(result)
+        })
+
+        app.get("/dashboard-orders", async (req, res) => {
+            const result = await paymentHistory.find().toArray()
             res.send(result)
         })
 
@@ -182,6 +188,7 @@ async function run() {
         })
 
 
+        // payment method
         app.post("/payment-create", async (req, res) => {
             const paymentInfo = req.body
 
@@ -241,7 +248,8 @@ async function run() {
                 transaction_id: tnxId,
                 products,
                 userInfo,
-                status: "Pending"
+                status: "Pending",
+                createdAt: new Date()
             }
             const save = await paymentHistory.insertOne(saveData)
             if (save) {
@@ -270,15 +278,104 @@ async function run() {
 
             try {
                 const result = await paymentHistory.updateOne(query, update)
-
-                // if (result.modifiedCount === 0) {
-                //     throw new Error("Failed to update payment status")
-                // }
                 console.log('payment update', result)
                 res.redirect(`http://localhost:5173/payment-success?tran_id=${successData.tran_id}`)
             } catch (error) {
                 console.log("Error updating payment status", error.message)
                 res.status(500).send("payment update failed");
+            }
+        })
+
+        // dashboard overview
+        app.get("/dashboard-overview", async (req, res) => {
+            try {
+                const currentTime = new Date()
+                const last24Hours = new Date(currentTime - 24 * 60 * 60 * 1000)
+                const lastWeek = new Date(currentTime - 7 * 24 * 60 * 60 * 1000)
+                const lastMonth = new Date(currentTime - 30 * 24 * 60 * 60 * 1000)
+                const lastYear = new Date(currentTime - 365 * 24 * 60 * 60 * 1000)
+
+
+
+                //  TOTAL AMOUNT START ===================================================
+
+                const calculateTotal = async (collection, timeRange) => {
+                    const count = await collection.countDocuments({ createdAt: { $gte: timeRange } })
+                    const totalAmout = await collection.aggregate([
+                        { $match: { createdAt: { $gte: timeRange } } },
+                        { $group: { _id: null, total: { $sum: "$amount" } } }
+                    ]).toArray()
+                    return {
+                        count,
+                        totalAmount: totalAmout.length > 0 ? totalAmout[0].total : 0
+                    }
+                }
+
+                const last24HourseRevenue = await calculateTotal(paymentHistory, last24Hours)
+                const last24WeekRevenue = await calculateTotal(paymentHistory, lastWeek)
+                const last24MonthRevenue = await calculateTotal(paymentHistory, lastMonth)
+                const last24YearRevenue = await calculateTotal(paymentHistory, lastYear)
+
+                //  TOTAL AMOUNT END ===========================================================
+
+                // TOTAL CUSTOMAR START ========================================================
+
+                const last24HourseCustomar = await AllUsers.countDocuments({ createdAt: { $gte: last24Hours } })
+                const lastWeekCustomar = await AllUsers.countDocuments({ createdAt: { $gte: lastWeek } })
+                const lastMonthCustomar = await AllUsers.countDocuments({ createdAt: { $gte: lastMonth } })
+                const lastYearCustomar = await AllUsers.countDocuments({ createdAt: { $gte: lastYear } })
+
+                // TOTAL CUSTOMAR END ==========================================================
+
+                // TOTAL ORDER START ========================================================
+
+                const last24HoursOrder = await paymentHistory.countDocuments({ createdAt: { $gte: last24Hours } })
+                const lastWeekOrder = await paymentHistory.countDocuments({ createdAt: { $gte: lastWeek } })
+                const lastMonthOrder = await paymentHistory.countDocuments({ createdAt: { $gte: lastMonth } })
+                const lastYearOrder = await paymentHistory.countDocuments({ createdAt: { $gte: lastYear } })
+
+                // TOTAL ORDER END ========================================================
+
+
+                // TOTAL ORDER START ========================================================
+
+                const last24HoursProducts = await AllProducts.countDocuments({ createdAt: { $gte: last24Hours } })
+                const lastWeekProducts = await AllProducts.countDocuments({ createdAt: { $gte: lastWeek } })
+                const lastMonthProducts = await AllProducts.countDocuments({ createdAt: { $gte: lastMonth } })
+                const lastYearProducts = await AllProducts.countDocuments({ createdAt: { $gte: lastYear } })
+
+                // TOTAL ORDER END ========================================================
+
+                res.status(200).json({
+                    totalRevenue: {
+                        last24Hours: last24HourseRevenue.totalAmount,
+                        lasWeeks: last24WeekRevenue.totalAmount,
+                        lastMonth: last24MonthRevenue.totalAmount,
+                        lastYear: last24YearRevenue.totalAmount
+                    },
+                    totalCustomar: {
+                        last24Hours: last24HourseCustomar,
+                        lastWeek: lastWeekCustomar,
+                        lastMonth: lastMonthCustomar,
+                        lastYear: lastYearCustomar
+                    },
+                    totalOrder: {
+                        last24Hours: last24HoursOrder,
+                        lastWeek: lastWeekProducts,
+                        lastMonth: lastMonthOrder,
+                        lastYear: lastYearOrder
+                    },
+                    totalProducts: {
+                        last24Hours: last24HoursProducts,
+                        lastWeek: lastWeekOrder,
+                        lastMonth: lastMonthProducts,
+                        lastYear: lastYearProducts
+                    }
+                })
+
+
+            } catch (error) {
+                res.status(500).json('error', error.message)
             }
         })
 
