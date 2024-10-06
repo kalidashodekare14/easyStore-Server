@@ -123,8 +123,8 @@ async function run() {
         })
 
         app.get("/customar-payment-history/:email", verifyToken, async (req, res) => {
-            const email = req.params.id
-            const query = { email: email }
+            const email = req.params.email
+            const query = { customar_email: email }
             const result = await paymentHistory.find(query).toArray()
             res.send(result)
         })
@@ -378,7 +378,7 @@ async function run() {
                         lastMonth: lastMonthProducts,
                         lastYear: lastYearProducts
                     },
-                   
+
 
                 })
 
