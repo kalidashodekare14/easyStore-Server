@@ -206,7 +206,7 @@ async function run() {
 
             // User Info
             const userInfo = paymentInfo.addressInfo
-            console.log(userInfo)
+            // console.log(userInfo)
 
             const initateData = {
                 store_id: "webwa66d6f4cb94fee",
@@ -247,7 +247,7 @@ async function run() {
                 }
             })
 
-            console.log(response)
+          
 
             const saveData = {
                 customar_name: paymentInfo?.customar_name,
