@@ -12,8 +12,6 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 
 
-// kalidashodekare14
-// T40ZxIQCQPM4zZ0N
 
 
 
