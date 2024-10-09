@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const { default: axios } = require("axios")
-const uri = "mongodb+srv://kalidashodekare14:T40ZxIQCQPM4zZ0N@cluster0.1duwq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1duwq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -247,7 +247,7 @@ async function run() {
                 }
             })
 
-          
+
 
             const saveData = {
                 customar_name: paymentInfo?.customar_name,
