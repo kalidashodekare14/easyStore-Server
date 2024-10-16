@@ -8,8 +8,8 @@ const port = process.env.PORT || 5000
 
 // middleware
 app.use(cors())
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 
 
@@ -36,6 +36,7 @@ async function run() {
         const AllProducts = client.db("EasyShop").collection("All_Product")
         const AllUsers = client.db("EasyShop").collection("All_Users")
         const paymentHistory = client.db("EasyShop").collection("Payment_Info")
+        const blogCollection = client.db("EasyShop").collection("Blogs")
         const tnxId = new ObjectId().toString();
 
         // jwt create
@@ -135,8 +136,15 @@ async function run() {
 
         app.post('/user-register', async (req, res) => {
             const user = req.body
+            const query = { email: user.email }
+            const exitstingUser = await AllUsers.findOne(query)
+            if (exitstingUser) {
+                return res.send({ message: 'user already exits', insertedId: null })
+            }
             const userInfo = {
+                name: user?.name,
                 email: user?.email,
+                image: user?.image,
                 password: user?.password,
                 mobile: user.mobile,
                 createdAt: new Date()
@@ -387,6 +395,31 @@ async function run() {
         })
 
 
+        // dashboard blogs post and get
+        app.post('/blogs-post', async (req, res) => {
+            const contentInfo = req.body
+            const contentData = {
+                blogTitle: contentInfo.blogTitle,
+                blogThumbnail: contentInfo.blogThumbnail,
+                content: contentInfo.content,
+                createdAt: new Date()
+            }
+            const result = await blogCollection.insertOne(contentData)
+            res.send(result)
+        })
+
+        app.get('/blogs', async (req, res) => {
+            const result = await blogCollection.find().toArray()
+            res.send(result)
+        })
+
+        app.get('/blog-details/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await blogCollection.findOne(query)
+            res.send(result)
+        })
+
 
         app.post("/payment-fail", async (req, res) => {
             res.redirect("http://localhost:5173/payment-fail")
@@ -407,7 +440,7 @@ async function run() {
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
