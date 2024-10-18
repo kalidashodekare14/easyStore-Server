@@ -205,6 +205,7 @@ async function run() {
         app.post("/payment-create", async (req, res) => {
             const paymentInfo = req.body
 
+            console.log(paymentInfo)
             // Product Info
             const products = paymentInfo.prodcuts
             const product_name = products.map(product => product.prodcut_name).join(", ")
@@ -260,12 +261,14 @@ async function run() {
                 customar_email: paymentInfo?.customar_email,
                 amount: paymentInfo?.amount,
                 current: paymentInfo.currency,
+                country: paymentInfo?.addressInfo?.country,
                 transaction_id: tnxId,
                 products,
                 userInfo,
                 status: "Pending",
                 createdAt: new Date()
             }
+            console.log('save data', saveData)
             const save = await paymentHistory.insertOne(saveData)
             if (save) {
                 res.send({
@@ -440,14 +443,30 @@ async function run() {
                 ]).toArray()
 
 
+                // Monthly and Country Sales Data
+                const monthlyCountrySales = await paymentHistory.aggregate([
+                    {
+                        $group: {
+                            _id: {
+                                month: { $month: '$createdAt' },
+                                country: '$country'
+                            },
+                            totalSales: { $sum: '$amount' },
+                            totalOrders: { $sum: 1 }
+                        }
+                    },
+                    {
+                        $sort: { "_id.month": 1 }
+                    }
+                ]).toArray()
+
                 res.send({
                     revenue: monthlyRevenue,
                     totalCustomar: monthlyCustomar,
                     allProduct: monthlyProducts,
-                    totalOrder: monthlyOrder
+                    totalOrder: monthlyOrder,
+                    countrySales: monthlyCountrySales
                 })
-
-
 
             } catch (error) {
                 console.log(error.message)
