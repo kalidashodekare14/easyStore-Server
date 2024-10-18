@@ -4,12 +4,25 @@ require('dotenv').config()
 const jwt = require('jsonwebtoken');
 const cors = require("cors")
 const port = process.env.PORT || 5000
+const http = require('http');
+const { Server } = require("socket.io");
+const { create } = require("domain");
 
 
 // middleware
-app.use(cors())
-app.use(express.json({ limit: '50mb' }))
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+const server = http.createServer(app)
+const io = new Server(server, {
+    cors: {
+        origin: 'http://localhost:5173',
+        methods: ["GET", "POST"]
+    }
+})
+
+app.use(cors({
+    origin: 'http://localhost:5173'
+}))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
 
 
 
@@ -37,6 +50,7 @@ async function run() {
         const AllUsers = client.db("EasyShop").collection("All_Users")
         const paymentHistory = client.db("EasyShop").collection("Payment_Info")
         const blogCollection = client.db("EasyShop").collection("Blogs")
+        const notificationCollection = client.db("EasyShop").collection("notification")
         const tnxId = new ObjectId().toString();
 
         // jwt create
@@ -150,6 +164,50 @@ async function run() {
                 createdAt: new Date()
             }
             const result = await AllUsers.insertOne(userInfo)
+
+            const notification = {
+                message: 'New User Registered',
+                user: {
+                    email: user.email
+                },
+                isRead: false,
+                createdAt: new Date()
+            }
+            const notificationResult = await notificationCollection.insertOne(notification)
+            io.emit('newUser', notification)
+            res.send({ result, notificationResult })
+        })
+
+        app.get('/notification', async (req, res) => {
+            const result = await notificationCollection.find({}).sort({ createdAt: -1 }).toArray()
+            res.send(result)
+        })
+
+        // unread notification sum
+        app.get('/notification/unread', async (req, res) => {
+            const totalUnread = await notificationCollection.aggregate([
+                { $match: { isRead: false } },
+                {
+                    $group: {
+                        _id: null,
+                        totalUnreadCount: { $sum: 1 },
+                    }
+                }
+            ]).toArray()
+            const unReadCount = totalUnread[0]?.totalUnreadCount || 0
+
+            res.status(200).json({ totalUnreadNotificaton: unReadCount });
+        })
+
+        //  unread notification update
+        app.patch('/notification-unread-update', async (req, res) => {
+            const unreadCheck = { isRead: false }
+            const updateData = {
+                $set: {
+                    isRead: true
+                }
+            }
+            const result = await notificationCollection.updateMany(unreadCheck, updateData)
             res.send(result)
         })
 
@@ -275,6 +333,20 @@ async function run() {
                     paymentUrl: response.data.GatewayPageURL
                 })
             }
+
+            const notification = {
+                message: 'New Order',
+                name: paymentInfo.customar_name,
+                user: {
+                    email: paymentInfo.customar_email
+                },
+                transaction_id: tnxId,
+                image: paymentInfo.image,
+                isRead: false,
+                createdAt: new Date()
+            }
+            await notificationCollection.insertOne(notification)
+            io.emit('newOrder', notification)
         })
 
         app.post("/success-payment", async (req, res) => {
@@ -528,12 +600,19 @@ async function run() {
 run().catch(console.dir);
 
 
+io.on('connection', (socket) => {
+    console.log('New client Connected');
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected');
+    })
+})
 
 
 app.get('/', (req, res) => {
     res.send(`EasyStore Server Is Running`)
 })
 
-app.listen(port, () => {
-    console.log(`EasyStore Server Is Running port ${port}`)
-})
+server.listen(port, () => {
+    console.log(`EasyStore Server Is Running port ${port}`);
+});
