@@ -394,6 +394,66 @@ async function run() {
             }
         })
 
+        app.get('/monthly-data', async (req, res) => {
+
+            try {
+                const monthlyRevenue = await paymentHistory.aggregate([
+                    {
+                        $group: {
+                            _id: { month: { $month: '$createdAt' } },
+                            totalRevenue: { $sum: '$amount' }
+                        }
+                    },
+                    { $sort: { _id: 1 } }
+                ]).toArray()
+
+                const monthlyCustomar = await AllUsers.aggregate([
+                    {
+                        $group: {
+                            _id: { month: { $month: '$createdAt' } },
+                            totalCustomar: { $sum: 1 }
+                        }
+                    },
+                    { $sort: { _id: 1 } }
+                ]).toArray()
+
+                const monthlyOrder = await paymentHistory.aggregate([
+                    {
+                        $group: {
+                            _id: { month: { $month: '$createdAt' } },
+                            totalOrder: { $sum: 1 }
+                        }
+                    },
+                    { $sort: { _id: 1 } }
+                ]).toArray()
+
+
+
+                const monthlyProducts = await AllUsers.aggregate([
+                    {
+                        $group: {
+                            _id: { month: { $month: '$createdAt' } },
+                            totalProduct: { $sum: 1 }
+                        }
+                    },
+                    { $sort: { _id: 1 } }
+                ]).toArray()
+
+
+                res.send({
+                    revenue: monthlyRevenue,
+                    totalCustomar: monthlyCustomar,
+                    allProduct: monthlyProducts,
+                    totalOrder: monthlyOrder
+                })
+
+
+
+            } catch (error) {
+                console.log(error.message)
+            }
+        })
+
 
         // dashboard blogs post and get
         app.post('/blogs-post', async (req, res) => {
