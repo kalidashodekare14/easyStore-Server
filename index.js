@@ -13,13 +13,13 @@ const { create } = require("domain");
 const server = http.createServer(app)
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:5173', 'https://easy-store-server.vercel.app'],
+        origin: ['http://localhost:5173', 'https://easystore-9fd6e.web.app'],
         methods: ["GET", "POST"]
     }
 })
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://easy-store-server.vercel.app']
+    origin: ['http://localhost:5173', 'https://easystore-9fd6e.web.app']
 }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
