@@ -111,12 +111,12 @@ async function run() {
 
         // dashboard api
 
-        app.get("/dashboard-all-product", verifyToken, async (req, res) => {
+        app.get("/dashboard-all-product", verifyToken, verifyAdmin, async (req, res) => {
             const result = await AllProducts.find().toArray()
             res.send(result)
         })
 
-        app.get("/dashboard-orders", async (req, res) => {
+        app.get("/dashboard-orders", verifyToken, verifyAdmin, async (req, res) => {
             const result = await paymentHistory.find().toArray()
             res.send(result)
         })
@@ -178,13 +178,13 @@ async function run() {
             res.send({ result, notificationResult })
         })
 
-        app.get('/notification', async (req, res) => {
+        app.get('/notification', verifyToken, verifyAdmin, async (req, res) => {
             const result = await notificationCollection.find({}).sort({ createdAt: -1 }).toArray()
             res.send(result)
         })
 
         // unread notification sum
-        app.get('/notification/unread', async (req, res) => {
+        app.get('/notification/unread', verifyToken, verifyAdmin, async (req, res) => {
             const totalUnread = await notificationCollection.aggregate([
                 { $match: { isRead: false } },
                 {
@@ -212,7 +212,7 @@ async function run() {
         })
 
 
-        app.patch("/profile_image/:email", async (req, res) => {
+        app.patch("/profile_image/:email", verifyToken, async (req, res) => {
             const email = req.params.email
             const update = req.body
             const filter = { email: email }
@@ -225,7 +225,7 @@ async function run() {
             const result = await AllUsers.updateOne(filter, updateDoc, option)
             res.send(result)
         })
-        app.patch("/information_update/:email", async (req, res) => {
+        app.patch("/information_update/:email", verifyToken, async (req, res) => {
             const email = req.params.email
             const update = req.body
             const filter = { email: email }
@@ -241,7 +241,7 @@ async function run() {
             const result = await AllUsers.updateOne(filter, updateDoc, option)
             res.send(result)
         })
-        app.patch("/address_update/:email", async (req, res) => {
+        app.patch("/address_update/:email", verifyToken, async (req, res) => {
             const email = req.params.email
             const update = req.body
             const filter = { email: email }
@@ -260,7 +260,7 @@ async function run() {
 
 
         // payment method
-        app.post("/payment-create", async (req, res) => {
+        app.post("/payment-create", verifyToken, async (req, res) => {
             const paymentInfo = req.body
 
             console.log(paymentInfo)
@@ -377,7 +377,7 @@ async function run() {
         })
 
         // dashboard overview
-        app.get("/dashboard-overview", async (req, res) => {
+        app.get("/dashboard-overview", verifyToken, verifyAdmin, async (req, res) => {
             try {
                 const currentTime = new Date()
                 const last24Hours = new Date(currentTime - 24 * 60 * 60 * 1000)
@@ -469,7 +469,7 @@ async function run() {
             }
         })
 
-        app.get('/monthly-data', async (req, res) => {
+        app.get('/monthly-data', verifyToken, verifyAdmin, async (req, res) => {
 
             try {
                 const monthlyRevenue = await paymentHistory.aggregate([
@@ -547,7 +547,7 @@ async function run() {
 
 
         // dashboard blogs post and get
-        app.post('/blogs-post', async (req, res) => {
+        app.post('/blogs-post', verifyToken, verifyAdmin, async (req, res) => {
             const contentInfo = req.body
             const contentData = {
                 blogTitle: contentInfo.blogTitle,
