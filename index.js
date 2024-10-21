@@ -14,12 +14,15 @@ const server = http.createServer(app)
 const io = new Server(server, {
     cors: {
         origin: ['http://localhost:5173', 'https://easystore-9fd6e.web.app'],
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST"],
+        credentials: true
     }
 })
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://easystore-9fd6e.web.app']
+    origin: ['http://localhost:5173', 'https://easystore-9fd6e.web.app'],
+    methods: ["GET", "POST"],
+    credentials: true
 }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
