@@ -16,7 +16,8 @@ const io = new Server(server, {
         origin: ['http://localhost:5173', 'https://easystore-9fd6e.web.app'],
         methods: ["GET", "POST"],
         credentials: true
-    }
+    },
+    transports: ['websocket', 'polling'],
 })
 
 app.use(cors({
