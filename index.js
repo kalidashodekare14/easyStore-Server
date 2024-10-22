@@ -283,7 +283,7 @@ async function run() {
                 total_amount: paymentInfo.amount,
                 currency: paymentInfo.currency,
                 tran_id: tnxId,
-                success_url: "http://localhost:5000/success-payment",
+                success_url: "https://easystore-9fd6e.web.app",
                 fail_url: "http://localhost:5000/payment-fail",
                 cancel_url: "http://localhost:5000/payment-cancel",
                 cus_name: paymentInfo.customar_name || "None",
