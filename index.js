@@ -373,7 +373,7 @@ async function run() {
             try {
                 const result = await paymentHistory.updateOne(query, update)
                 console.log('payment update', result)
-                res.redirect(`http://localhost:5173/payment-success?tran_id=${successData.tran_id}`)
+                res.redirect(`https://easystore-9fd6e.web.app/payment-success?tran_id=${successData.tran_id}`)
             } catch (error) {
                 console.log("Error updating payment status", error.message)
                 res.status(500).send("payment update failed");
