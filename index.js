@@ -283,9 +283,9 @@ async function run() {
                 total_amount: paymentInfo.amount,
                 currency: paymentInfo.currency,
                 tran_id: tnxId,
-                success_url: "https://easystore-9fd6e.web.app",
-                fail_url: "http://localhost:5000/payment-fail",
-                cancel_url: "http://localhost:5000/payment-cancel",
+                success_url: "https://easystore-server-production.up.railway.app/success-payment",
+                fail_url: "https://easystore-server-production.up.railway.app/payment-fail",
+                cancel_url: "https://easystore-server-production.up.railway.app/payment-cancel",
                 cus_name: paymentInfo.customar_name || "None",
                 cus_email: paymentInfo.customar_email || "None",
                 cus_add1: userInfo.current_address || "None",
@@ -378,6 +378,13 @@ async function run() {
                 console.log("Error updating payment status", error.message)
                 res.status(500).send("payment update failed");
             }
+        })
+
+        app.post('/payment-fail', async (req, res) => {
+            res.redirect('http://localhost:5173/payment-fail')
+        })
+        app.post('/payment-cancel', async (req, res) => {
+            res.redirect('http://localhost:5173/payment-cancel')
         })
 
         // dashboard overview
@@ -577,11 +584,11 @@ async function run() {
 
 
         app.post("/payment-fail", async (req, res) => {
-            res.redirect("http://localhost:5173/payment-fail")
+            res.redirect("https://easystore-9fd6e.web.app/payment-fail")
         })
 
         app.post("/payment-cancel", async (req, res) => {
-            res.redirect("http://localhost:5173/payment-cancel")
+            res.redirect("https://easystore-9fd6e.web.app/payment-cancel")
         })
 
 
