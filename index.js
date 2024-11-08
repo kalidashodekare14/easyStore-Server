@@ -146,6 +146,22 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/login-matched', async (req, res) => {
+            const { email, password } = req.query
+            console.log(email, password)
+            const emailQuery = { email: email }
+            const emailMatched = await AllUsers.findOne(emailQuery)
+            let mailStore = false
+            let passwordStore = false
+            if (emailMatched) {
+                mailStore = true
+            }
+            if (emailMatched.password === password) {
+                passwordStore = true
+            }
+            res.send({ email: mailStore, password: passwordStore })
+        })
+
         app.post('/all_product', async (req, res) => {
             const dataInfo = req.body
             const result = await AllProducts.insertOne(dataInfo)
